@@ -4,7 +4,7 @@ Tags: cache, wp-rest-api, api, rest, rest cache
 Requires at least: 4.7
 Tested up to: 6.7
 Requires PHP: 7.0
-Stable tag: 2025.1.0
+Stable tag: 2025.1.1
 License: GPLv3
 License URI: http://www.gnu.org/licenses/gpl.html
 
@@ -130,10 +130,10 @@ Yes they can!  Go to Settings > WP REST Cache, on the Settings tab you can check
 
 Yes you can! Use the hook `wp_rest_cache/display_clear_cache_button` like this:
 
-`function wprc_hide_clear_cache_button( $show ) {
-    return true;
+`function wprc_display_clear_cache_button( $show ) {
+    return false;
 }
-add_filter('wp_rest_cache/display_clear_cache_button', 'wprc_hide_clear_cache_button', 10, 1);`
+add_filter('wp_rest_cache/display_clear_cache_button', 'wprc_display_clear_cache_button', 10, 1);`
 
 = Can I differentiate between caches based upon request headers? =
 
@@ -170,6 +170,11 @@ Yes you can! Use the `wp wp-rest-cache flush` command to flush caches. Type `wp 
 5. Cache details page - Cache data.
 
 == Changelog ==
+
+= 2025.1.1 =
+Release Date: June 6th, 2025
+
+Fix: A path-traversal vulnerability in the plugin was discovered and fixed. It was reported by Darius Sveikauskas.
 
 = 2025.1.0 =
 Release Date: April 10th, 2025
