@@ -4,7 +4,7 @@ Tags: cache, wp-rest-api, api, rest, rest cache
 Requires at least: 4.7
 Tested up to: 6.8
 Requires PHP: 7.0
-Stable tag: 2025.1.7
+Stable tag: 2026.1.1
 License: GPLv3
 License URI: http://www.gnu.org/licenses/gpl.html
 
@@ -26,6 +26,14 @@ This plugin offers:
 * Specifying after what time the cache should be timed out.
 * Registering custom endpoints for caching.
 * Automatic cache regeneration.
+
+**WP REST Cache Pro**
+For more advanced features, check out our [WP REST Cache Pro](https://plugins.acato.nl/) plugin:
+
+* Configure custom endpoints for caching through the wp-admin interface.
+* Configure relationships within endpoints.
+* No coding required.
+
 
 == Installation ==
 
@@ -69,11 +77,11 @@ Yes, the plugin will automatically cache the endpoint of custom taxonomies. Unle
 
 = I have created a custom WP REST endpoint, will the plugin cache this endpoint? =
 
-No, the plugin will not cache your custom endpoint unless you tell it to cache it using the hook `wp_rest_cache/allowed_endpoints` (See 'Can I register my own endpoint for caching?'). Please keep in mind that once you do so the plugin will not automatically flush the cache of that endpoint if something is edited (it has no way of knowing when to flush the cache). It will however try to determine the relations and for the determined relations it will flush the cache automatically once the relation is edited.
+No, the plugin will not cache your custom endpoint unless you tell it to cache it using our [WP REST Cache Pro](https://plugins.acato.nl/) plugin or the hook `wp_rest_cache/allowed_endpoints` (See 'Can I register my own endpoint for caching?'). Please keep in mind that once you do so the plugin will not automatically flush the cache of that endpoint if something is edited (it has no way of knowing when to flush the cache). It will however try to determine the relations and for the determined relations it will flush the cache automatically once the relation is edited.
 
 = Can I register my own endpoint for caching? =
 
-Yes you can! Use the hook `wp_rest_cache/allowed_endpoints` like this:
+Yes you can! You can use our [WP REST Cache Pro](https://plugins.acato.nl/) plugin to easily register your own endpoints for caching through the wp-admin interface. Or you can do it programmatically by using the hook `wp_rest_cache/allowed_endpoints` like this:
 
 `/**
  * Register the /wp-json/acf/v3/posts endpoint so it will be cached.
@@ -179,47 +187,21 @@ You can report security bugs through the Patchstack Vulnerability Disclosure Pro
 
 == Changelog ==
 
-= 2025.1.7 =
-Release Date: September 1st, 2025
+= 2026.1.1 =
+Release Date: January 20th, 2026
 
-Fix: Incorrect loading of translations in some cases.
+Fix: A XSS vulnerability in the plugin was discovered and fixed. It was reported by Nguyen Ba Khanh.
+Fix: Improved transition_post_status_logic. (Contribution by: Moshe Gross)
 
-= 2025.1.6 =
-Release Date: August 19th, 2025
+= 2026.1.0 =
+Release Date: January 14th, 2026
 
-Fix: Remove load_plugin_textdomain as it is no longer needed as of WP 4.6
+Improvement: Only flush caches on meta update if filter returns true.
 
-= 2025.1.5 =
-Release Date: August 18th, 2025
+= 2025.2.0 =
+Release Date: December 15th, 2025
 
-Fix: incorrect url when regenerating expired caches
-Fix: PHP Notice _load_textdomain_just_in_time was called incorrectly
-
-= 2025.1.4 =
-Release Date: June 25th, 2025
-
-Fix: Better checking of existing primary key before updating it.
-
-= 2025.1.3 =
-Release Date: June 25th, 2025
-
-Fix: Check if primary key exists before dropping it.
-
-= 2025.1.2 =
-Release Date: June 11th, 2025
-
-Fix: Make sure comment endpoints are flushed when the corresponding post is deleted or unpublished.
-Improvement: Add VDP to FAQ.
-
-= 2025.1.1 =
-Release Date: June 6th, 2025
-
-Fix: A path-traversal vulnerability in the plugin was discovered and fixed. It was reported by Darius Sveikauskas.
-
-= 2025.1.0 =
-Release Date: April 10th, 2025
-
-Improvement: Flush media endpoint caches when a new media has been uploaded.
+Improvement: Also flush caches when only the (post) meta is updated.
 
 = Earlier versions =
 For the changelog of earlier versions, please refer to [the changelog on Github](https://github.com/acato-plugins/wp-rest-cache/blob/master/changelog.md).

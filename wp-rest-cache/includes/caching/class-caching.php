@@ -357,7 +357,7 @@ class Caching {
 
 	/**
 	 * Fired upon WordPress 'transition_post_status' hook. Delete all non-single endpoint caches for this post type if
-	 * the new or the old status is 'publish'.
+	 * the new or the old status (but not both) is 'publish'.
 	 *
 	 * @param string   $new_status The new status of the post.
 	 * @param string   $old_status The old status of the post.
@@ -366,7 +366,7 @@ class Caching {
 	 * @return void
 	 */
 	public function transition_post_status( $new_status, $old_status, $post ) {
-		if ( 'publish' !== $new_status && 'publish' !== $old_status ) {
+		if ( $new_status === $old_status || ( 'publish' !== $new_status && 'publish' !== $old_status ) ) {
 			return;
 		}
 
@@ -374,6 +374,67 @@ class Caching {
 
 		if ( 'publish' === $old_status && post_type_supports( $post->post_type, 'comments' ) ) {
 			$this->delete_comment_type_related_caches();
+		}
+	}
+
+	/**
+	 * Fired upon WordPress 'updated_post_meta' hook. Delete all related caches.
+	 *
+	 * @param int    $meta_id ID of updated metadata entry.
+	 * @param int    $object_id ID of the object metadata is for.
+	 * @param string $meta_key Metadata key.
+	 * @param mixed  $_meta_value Metadata value.
+	 *
+	 * @return void
+	 */
+	public function updated_post_meta( $meta_id, $object_id, $meta_key, $_meta_value ) {
+		$this->updated_meta( 'post', $meta_id, $object_id, $meta_key, $_meta_value );
+	}
+
+	/**
+	 * Delete related caches when metadata is updated.
+	 *
+	 * @param string $meta_type The meta type, can be any of post, comment, term or user.
+	 * @param int    $meta_id ID of updated metadata entry.
+	 * @param int    $object_id ID of the object metadata is for.
+	 * @param string $meta_key Metadata key.
+	 * @param mixed  $_meta_value Metadata value.
+	 *
+	 * @return void
+	 */
+	private function updated_meta( $meta_type, $meta_id, $object_id, $meta_key, $_meta_value ) {
+		/**
+		 * Should caches be flushed on meta update?
+		 *
+		 * Allows external determination if caches should be flushed when meta is updated.
+		 *
+		 * @param boolean $flush Whether the cache should be flushed (true) or not (false)
+		 * @param string $meta_type The meta type, can be any of post, comment, term or user.
+		 * @param int $meta_id ID of updated metadata entry.
+		 * @param int $object_id ID of the object metadata is for.
+		 * @param string $meta_key Metadata key.
+		 * @param mixed $_meta_value Metadata value.
+		 *
+		 * @since 2026.1.0
+		 */
+		$flush = apply_filters( 'wp_rest_cache/flush_on_meta_update', false, $meta_type, $meta_id, $object_id, $meta_key, $_meta_value );
+
+		/**
+		 * Should caches be flushed on meta update? Based on meta type / meta key.
+		 *
+		 * Allows external determination if caches should be flushed when meta is updated.
+		 *
+		 * @param boolean $flush Whether the cache should be flushed (true) or not (false)
+		 * @param int $meta_id ID of updated metadata entry.
+		 * @param int $object_id ID of the object metadata is for.
+		 * @param mixed $_meta_value Metadata value.
+		 *
+		 * @since 2026.1.0
+		 */
+		$flush = apply_filters( "wp_rest_cache/flush_on_meta_update/{$meta_type}/{$meta_key}", $flush, $meta_id, $object_id, $_meta_value );
+		if ( true === $flush ) {
+			$meta_subtype = get_object_subtype( $meta_type, $object_id );
+			$this->delete_related_caches( $object_id, $meta_subtype );
 		}
 	}
 
@@ -438,6 +499,20 @@ class Caching {
 	}
 
 	/**
+	 * Fired upon WordPress 'updated_term_meta' hook. Delete all related caches.
+	 *
+	 * @param int    $meta_id ID of updated metadata entry.
+	 * @param int    $object_id ID of the object metadata is for.
+	 * @param string $meta_key Metadata key.
+	 * @param mixed  $_meta_value Metadata value.
+	 *
+	 * @return void
+	 */
+	public function updated_term_meta( $meta_id, $object_id, $meta_key, $_meta_value ) {
+		$this->updated_meta( 'term', $meta_id, $object_id, $meta_key, $_meta_value );
+	}
+
+	/**
 	 * Fired upon WordPress 'profile_update' hook. Delete all related caches for this user.
 	 *
 	 * @param int $user_id User ID.
@@ -470,6 +545,20 @@ class Caching {
 	}
 
 	/**
+	 * Fired upon WordPress 'updated_user_meta' hook. Delete all related caches.
+	 *
+	 * @param int    $meta_id ID of updated metadata entry.
+	 * @param int    $object_id ID of the object metadata is for.
+	 * @param string $meta_key Metadata key.
+	 * @param mixed  $_meta_value Metadata value.
+	 *
+	 * @return void
+	 */
+	public function updated_user_meta( $meta_id, $object_id, $meta_key, $_meta_value ) {
+		$this->updated_meta( 'user', $meta_id, $object_id, $meta_key, $_meta_value );
+	}
+
+	/**
 	 * Fired upon WordPress 'deleted_comment', 'trashed_comment' and 'spammed_comment' hooks. Delete all related caches
 	 * for this comment, including all single cache statistics if comment is deleted.
 	 *
@@ -497,6 +586,20 @@ class Caching {
 	 */
 	public function delete_comment_type_related_caches() {
 		$this->delete_object_type_caches( 'comment' );
+	}
+
+	/**
+	 * Fired upon WordPress 'updated_comment_meta' hook. Delete all related caches.
+	 *
+	 * @param int    $meta_id ID of updated metadata entry.
+	 * @param int    $object_id ID of the object metadata is for.
+	 * @param string $meta_key Metadata key.
+	 * @param mixed  $_meta_value Metadata value.
+	 *
+	 * @return void
+	 */
+	public function updated_comment_meta( $meta_id, $object_id, $meta_key, $_meta_value ) {
+		$this->updated_meta( 'comment', $meta_id, $object_id, $meta_key, $_meta_value );
 	}
 
 	/**
@@ -786,6 +889,19 @@ class Caching {
 			return;
 		}
 
+		/**
+		 * Insert cache relation.
+		 *
+		 * Allows external action upon inserting a cache relation.
+		 *
+		 * @since 2025.2.0
+		 *
+		 * @param int $cache_id The row id of the current cache.
+		 * @param int $object_id The id of the object the cache has a relation with.
+		 * @param string $object_type The object type of the object the cache has a relation with.
+		 */
+		do_action( 'wp_rest_cache/insert_cache_relation', $cache_id, $object_id, $object_type );
+
 		$wpdb->replace(
 			$this->db_table_relations,
 			[
@@ -1070,6 +1186,8 @@ class Caching {
 	 * @return string The where clause.
 	 */
 	private function get_where_clause( $api_type, &$prepare_args ) {
+		global $wpdb;
+
 		$where          = '`cache_type` = %s AND `deleted` = %d';
 		$prepare_args[] = $api_type;
 		$prepare_args[] = false;
@@ -1080,8 +1198,9 @@ class Caching {
 
 		if ( ! empty( $search ) ) {
 			$where         .= ' AND ( `request_uri` LIKE %s OR `object_type` LIKE %s )';
-			$prepare_args[] = '%' . $search . '%';
-			$prepare_args[] = '%' . $search . '%';
+			$search_escaped = '%' . $wpdb->esc_like( $search ) . '%';
+			$prepare_args[] = $search_escaped;
+			$prepare_args[] = $search_escaped;
 		}
 
 		return $where;

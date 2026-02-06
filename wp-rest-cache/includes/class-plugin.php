@@ -55,7 +55,7 @@ class Plugin {
 	 */
 	public function __construct() {
 		$this->plugin_name = 'wp-rest-cache';
-		$this->version     = '2025.1.7';
+		$this->version     = '2026.1.1';
 
 		$this->define_admin_hooks();
 		$this->define_api_hooks();
@@ -76,6 +76,7 @@ class Plugin {
 		// Create custom plugin settings menu.
 		add_action( 'admin_menu', [ $plugin_admin, 'create_menu' ] );
 		add_action( 'admin_init', [ $plugin_admin, 'register_settings' ] );
+		add_action( 'admin_init', [ $plugin_admin, 'display_pro_message' ] );
 		add_action( 'admin_init', [ $plugin_admin, 'check_muplugin_existence' ] );
 		add_action( 'admin_init', [ $plugin_admin, 'check_memcache_ext_object_caching' ] );
 		add_action( 'admin_init', [ $plugin_admin, 'handle_actions' ] );
@@ -153,6 +154,7 @@ class Plugin {
 		add_action( 'save_post', [ $caching, 'save_post' ], 999, 3 );
 		add_action( 'delete_post', [ $caching, 'delete_post' ] );
 		add_action( 'transition_post_status', [ $caching, 'transition_post_status' ], 10, 3 );
+		add_action( 'updated_post_meta', [ $caching, 'updated_post_meta' ], 10, 4 );
 
 		add_action( 'add_attachment', [ $caching, 'add_attachment' ], 999 );
 		add_action( 'edit_attachment', [ $caching, 'edit_attachment' ], 999, 1 );
@@ -160,10 +162,12 @@ class Plugin {
 		add_action( 'created_term', [ $caching, 'created_term' ], 999, 3 );
 		add_action( 'edited_term', [ $caching, 'edited_term' ], 999, 3 );
 		add_action( 'delete_term', [ $caching, 'delete_term' ], 10, 3 );
+		add_action( 'updated_term_meta', [ $caching, 'updated_term_meta' ], 10, 4 );
 
 		add_action( 'profile_update', [ $caching, 'profile_update' ], 999 );
 		add_action( 'user_register', [ $caching, 'user_register' ], 999 );
 		add_action( 'deleted_user', [ $caching, 'deleted_user' ] );
+		add_action( 'updated_user_meta', [ $caching, 'updated_user_meta' ], 10, 4 );
 
 		add_action( 'edit_comment', [ $caching, 'delete_comment_type_related_caches' ], 999 );
 		add_action( 'deleted_comment', [ $caching, 'delete_comment_related_caches' ], 10 );
@@ -173,6 +177,7 @@ class Plugin {
 		add_action( 'unspammed_comment', [ $caching, 'delete_comment_type_related_caches' ], 999 );
 		add_action( 'wp_insert_comment', [ $caching, 'delete_comment_type_related_caches' ], 999 );
 		add_action( 'comment_post', [ $caching, 'delete_comment_type_related_caches' ], 999 );
+		add_action( 'updated_comment_meta', [ $caching, 'updated_comment_meta' ], 10, 4 );
 
 		add_action( 'wp_rest_cache_regenerate_cron', [ $caching, 'regenerate_expired_caches' ] );
 		add_action( 'wp_rest_cache_cleanup_deleted_caches', [ $caching, 'cleanup_deleted_caches' ] );
