@@ -350,7 +350,8 @@ class Endpoint_Api {
 		}
 
 		// Parameter to skip caching.
-		if ( true === filter_has_var( INPUT_GET, 'skip_cache' ) ) {
+		// phpcs:ignore WordPress.Security.NonceVerification.Recommended -- read-only check on a GET marker.
+		if ( isset( $_GET['skip_cache'] ) ) {
 			/**
 			 * Filter whether to allow the skip_cache parameter.
 			 *
@@ -383,10 +384,18 @@ class Endpoint_Api {
 		foreach ( $allowed_endpoints as $namespace => $endpoints ) {
 			foreach ( $endpoints as $endpoint ) {
 				$endpoint_uri = $rest_prefix . $namespace . '/' . $endpoint;
+				$needle       = $endpoint_uri;
 				if ( $use_parameter ) {
-					$endpoint_uri = $rest_prefix . rawurlencode( '/' . $namespace . '/' . $endpoint );
+					$needle = $rest_prefix . rawurlencode( '/' . $namespace . '/' . $endpoint );
 				}
-				if ( strpos( $this->request_uri, $endpoint_uri ) !== false ) {
+				if ( strpos( $this->request_uri, $needle ) !== false ) {
+					$allowed_endpoint = true;
+					break 2;
+				}
+
+				// Regex fallback: treat the (unencoded) endpoint URI as a pattern.
+				// phpcs:ignore WordPress.PHP.NoSilencedErrors.Discouraged -- incorrect pattern ignored, it will simply not match.
+				if ( @preg_match( '#' . $endpoint_uri . '#', $this->request_uri ) === 1 ) {
 					$allowed_endpoint = true;
 					break 2;
 				}
@@ -402,10 +411,17 @@ class Endpoint_Api {
 		foreach ( $disallowed_endpoints as $namespace => $endpoints ) {
 			foreach ( $endpoints as $endpoint ) {
 				$endpoint_uri = $rest_prefix . $namespace . '/' . $endpoint;
+				$needle       = $endpoint_uri;
 				if ( $use_parameter ) {
-					$endpoint_uri = $rest_prefix . rawurlencode( '/' . $namespace . '/' . $endpoint );
+					$needle = $rest_prefix . rawurlencode( '/' . $namespace . '/' . $endpoint );
 				}
-				if ( strpos( $this->request_uri, $endpoint_uri ) !== false ) {
+				if ( strpos( $this->request_uri, $needle ) !== false ) {
+					return true;
+				}
+
+				// Regex fallback: treat the (unencoded) endpoint URI as a pattern.
+				// phpcs:ignore WordPress.PHP.NoSilencedErrors.Discouraged -- incorrect pattern ignored, it will simply not match.
+				if ( @preg_match( '#' . $endpoint_uri . '#', $this->request_uri ) === 1 ) {
 					return true;
 				}
 			}
